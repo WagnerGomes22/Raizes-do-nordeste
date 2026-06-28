@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Trae Project</title>
+    <script>
+      ;(() => {
+        const params = new URLSearchParams(window.location.search)
+        const redirectedPath = params.get('p')
+        if (!redirectedPath) return
+
+        const redirectedQuery = params.get('q')
+        const basePath = window.location.pathname.replace(/\/$/, '')
+        const nextUrl = `${basePath}${redirectedPath}${redirectedQuery ? `?${redirectedQuery}` : ''}${window.location.hash}`
+
+        window.history.replaceState(null, '', nextUrl)
+      })()
+    </script>
+    <script type="module">
+      if (import.meta.hot?.on) {
+        import.meta.hot.on('vite:error', (error) => {
+          if (error.err) {
+            console.error(
+              [error.err.message, error.err.frame].filter(Boolean).join('\n'),
+            )
+          }
+        })
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

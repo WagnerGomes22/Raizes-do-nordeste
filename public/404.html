@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecionando...</title>
+    <script>
+      ;(() => {
+        const pathParts = window.location.pathname.split('/').filter(Boolean)
+        const repoBase = pathParts.length > 0 ? `/${pathParts[0]}` : ''
+        const redirectedPath =
+          pathParts.length > 1 ? `/${pathParts.slice(1).join('/')}` : '/'
+        const redirectedQuery = window.location.search
+          ? `&q=${encodeURIComponent(window.location.search.slice(1))}`
+          : ''
+        const redirectUrl =
+          `${window.location.origin}${repoBase}/?p=${encodeURIComponent(redirectedPath)}` +
+          `${redirectedQuery}${window.location.hash}`
+
+        window.location.replace(redirectUrl)
+      })()
+    </script>
+  </head>
+  <body></body>
+  </html>

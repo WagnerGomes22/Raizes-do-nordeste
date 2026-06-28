@@ -1,0 +1,63 @@
+export const unidades = [
+  {
+    id: 'uni_fortaleza_meireles',
+    nome: 'Raízes do Nordeste — Meireles',
+    cidade: 'Fortaleza',
+    uf: 'CE',
+    endereco: 'Av. da Beira Mar, 1200 — Meireles',
+    telefone: '+55 (85) 3333-1200',
+    horarios: {
+      segSex: '07:00–22:00',
+      sab: '08:00–23:00',
+      dom: '08:00–21:00',
+    },
+    geo: { lat: -3.7319, lng: -38.4904 },
+    ativa: true,
+  },
+  {
+    id: 'uni_recife_boa_viagem',
+    nome: 'Raízes do Nordeste — Boa Viagem',
+    cidade: 'Recife',
+    uf: 'PE',
+    endereco: 'Av. Conselheiro Aguiar, 2480 — Boa Viagem',
+    telefone: '+55 (81) 3333-2480',
+    horarios: {
+      segSex: '07:00–22:00',
+      sab: '08:00–23:00',
+      dom: '08:00–21:00',
+    },
+    geo: { lat: -8.1266, lng: -34.9012 },
+    ativa: true,
+  },
+  {
+    id: 'uni_salvador_barra',
+    nome: 'Raízes do Nordeste — Barra',
+    cidade: 'Salvador',
+    uf: 'BA',
+    endereco: 'Av. Oceânica, 650 — Barra',
+    telefone: '+55 (71) 3333-0650',
+    horarios: {
+      segSex: '07:00–22:00',
+      sab: '08:00–23:00',
+      dom: '08:00–21:00',
+    },
+    geo: { lat: -13.0082, lng: -38.5324 },
+    ativa: true,
+  },
+  {
+    id: 'uni_natal_ponta_negra',
+    nome: 'Raízes do Nordeste — Ponta Negra',
+    cidade: 'Natal',
+    uf: 'RN',
+    endereco: 'Av. Eng. Roberto Freire, 1800 — Ponta Negra',
+    telefone: '+55 (84) 3333-1800',
+    horarios: {
+      segSex: '07:00–22:00',
+      sab: '08:00–23:00',
+      dom: '08:00–21:00',
+    },
+    geo: { lat: -5.8723, lng: -35.1845 },
+    ativa: true,
+  },
+]
+
