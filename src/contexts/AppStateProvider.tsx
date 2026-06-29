@@ -12,6 +12,47 @@ import { fluxoPedido } from '@/data/pedidos'
 import { criarPerfilMock, obterUsuarioPorEmail, usuarios } from '@/data/usuarios'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 
+function mergeAppStateWithDefaults(
+  state: Partial<AppState> | null | undefined,
+  initialState: AppState,
+): AppState {
+  const perfil = state?.perfil
+  const fidelidade = state?.fidelidade
+
+  return {
+    ...initialState,
+    ...state,
+    perfil: {
+      ...initialState.perfil,
+      ...perfil,
+      preferencias: {
+        ...initialState.perfil.preferencias,
+        ...perfil?.preferencias,
+      },
+    },
+    fidelidade: {
+      ...initialState.fidelidade,
+      ...fidelidade,
+      historico: fidelidade?.historico ?? initialState.fidelidade.historico,
+      recompensasResgatadas:
+        fidelidade?.recompensasResgatadas ?? initialState.fidelidade.recompensasResgatadas,
+    },
+  }
+}
+
+function hasMissingAppStateFields(state: Partial<AppState> | null | undefined) {
+  if (!state) return true
+
+  return (
+    !state.perfil ||
+    !state.perfil.preferencias ||
+    !state.fidelidade ||
+    typeof state.fidelidade.pontos !== 'number' ||
+    !Array.isArray(state.fidelidade.historico) ||
+    !Array.isArray(state.fidelidade.recompensasResgatadas)
+  )
+}
+
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const feedbackTimeoutRef = useRef<number | null>(null)
@@ -44,6 +85,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     APP_STATE_STORAGE_KEY,
     initialState,
   )
+  const normalizedState = useMemo(
+    () => mergeAppStateWithDefaults(state, initialState),
+    [initialState, state],
+  )
+
+  useEffect(() => {
+    if (hasMissingAppStateFields(state)) {
+      setState(normalizedState)
+    }
+  }, [normalizedState, setState, state])
 
   const clearFeedback = useCallback(() => {
     if (feedbackTimeoutRef.current) {
@@ -76,16 +127,28 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const value = useMemo(() => {
+    const updateState = (
+      valueOrUpdater: AppState | ((prev: AppState) => AppState),
+    ) => {
+      setState((prev) => {
+        const safePrev = mergeAppStateWithDefaults(prev, initialState)
+        const next =
+          valueOrUpdater instanceof Function ? valueOrUpdater(safePrev) : valueOrUpdater
+
+        return mergeAppStateWithDefaults(next, initialState)
+      })
+    }
+
     return {
-      state,
+      state: normalizedState,
       storageKey: APP_STATE_STORAGE_KEY,
       feedbackMessage,
       toggleOfertas: () =>
-        setState((prev) => ({ ...prev, ofertasAtivas: !prev.ofertasAtivas })),
+        updateState((prev) => ({ ...prev, ofertasAtivas: !prev.ofertasAtivas })),
       setOfertasAtivas: (ofertasAtivas: boolean) =>
-        setState((prev) => ({ ...prev, ofertasAtivas })),
+        updateState((prev) => ({ ...prev, ofertasAtivas })),
       login: (email: string) =>
-        setState((prev) => {
+        updateState((prev) => {
           const usuario = obterUsuarioPorEmail(email)
           if (!usuario) {
             return {
@@ -110,7 +173,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           }
         }),
       register: (input) =>
-        setState((prev) => ({
+        updateState((prev) => ({
           ...prev,
           usuarioLogadoId: `cad-${Date.now()}`,
           cadastroAceitoLgpd: input.aceitouLgpd,
@@ -120,7 +183,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           },
         })),
       logout: () =>
-        setState((prev) => ({
+        updateState((prev) => ({
           ...prev,
           usuarioLogadoId: null,
         })),
@@ -128,7 +191,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         const produto = obterProdutoPorId(produtoId)
         const quantidadeLabel = quantidade > 1 ? `${quantidade}x ` : ''
 
-        setState((prev) => {
+        updateState((prev) => {
           const itemAtual = prev.carrinho.find((item) => item.produtoId === produtoId)
 
           if (itemAtual) {
@@ -153,7 +216,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         )
       },
       updateCartItem: (produtoId: string, quantidade: number) =>
-        setState((prev) => ({
+        updateState((prev) => ({
           ...prev,
           carrinho:
             quantidade <= 0
@@ -163,17 +226,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
                 ),
         })),
       removeFromCart: (produtoId: string) =>
-        setState((prev) => ({
+        updateState((prev) => ({
           ...prev,
           carrinho: prev.carrinho.filter((item) => item.produtoId !== produtoId),
         })),
       clearCart: () =>
-        setState((prev) => ({
+        updateState((prev) => ({
           ...prev,
           carrinho: [],
         })),
       setFormaPagamento: (formaPagamentoSelecionada) =>
-        setState((prev) => ({
+        updateState((prev) => ({
           ...prev,
           formaPagamentoSelecionada,
         })),
@@ -181,7 +244,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         const pedidoId = `PED-${Date.now()}`
         let created = false
 
-        setState((prev) => {
+        updateState((prev) => {
           if (prev.carrinho.length === 0) return prev
 
           created = true
@@ -219,7 +282,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         return created ? pedidoId : null
       },
       advancePedidoStatus: () =>
-        setState((prev) => {
+        updateState((prev) => {
           if (!prev.pedidoAtual) return prev
 
           const indiceAtual = fluxoPedido.indexOf(prev.pedidoAtual.status)
@@ -237,7 +300,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           }
         }),
       updatePerfil: (perfilAtualizado) =>
-        setState((prev) => ({
+        updateState((prev) => ({
           ...prev,
           perfil: {
             ...prev.perfil,
@@ -249,7 +312,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           },
         })),
       togglePreferencia: (key) =>
-        setState((prev) => ({
+        updateState((prev) => ({
           ...prev,
           perfil: {
             ...prev.perfil,
@@ -262,7 +325,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       redeemReward: (rewardId: string, custoPontos: number, titulo: string) => {
         let success = false
 
-        setState((prev) => {
+        updateState((prev) => {
           if (prev.fidelidade.pontos < custoPontos) return prev
 
           success = true
@@ -292,7 +355,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       clearFeedback,
       reset: remove,
     }
-  }, [clearFeedback, feedbackMessage, remove, setState, showFeedback, state])
+  }, [clearFeedback, feedbackMessage, initialState, normalizedState, remove, setState, showFeedback])
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>
 }
